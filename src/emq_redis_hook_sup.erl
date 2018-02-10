@@ -29,5 +29,5 @@ start_link() ->
 
 init([]) ->
     {ok, Server} = application:get_env(?APP, server),
-    PoolSpec = ecpool:pool_spec(?APP, ?APP, emq_auth_redis_cli, Server),
+    PoolSpec = ecpool:pool_spec(?APP, ?APP, emq_redis_hook_cli, Server),
     {ok, {{one_for_one, 10, 100}, [PoolSpec]}}.
