@@ -232,8 +232,7 @@ on_message_acked(ClientId, Username, Message = #mqtt_message{topic = Topic}, {Fi
 
 send_redis_request(Params) ->
     Params1 = iolist_to_binary(mochijson2:encode(Params)),
-    Server = application:get_env(?APP, server, []),
-    Key = proplists:get_value(key,Server),
+  Key = application:get_env(?APP, key, "message"),
     ?LOG(debug, "Params: ~p  key: ~p ", [Params1,Key]),
     case emq_redis_hook_cli:q(["LPUSH", Key, Params1]) of
       {ok, _} ->

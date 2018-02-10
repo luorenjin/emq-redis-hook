@@ -21,7 +21,7 @@
   hidden
 ]}.
 
-{mapping, "redis.hook.message.key", "emq_redis_hook.server", [
+{mapping, "redis.hook.message.key", "emq_redis_hook.key", [
   {default, "message"},
   {datatype, string}
 ]}.
@@ -44,8 +44,7 @@
    {host, RHost},
    {port, RPort},
    {database, DB},
-   {password, Password},
-   {key,Key}]
+   {password, Password}]
 end}.
 
 {mapping, "redis.hook.rule.client.connected.$name", "emq_redis_hook.rules", [

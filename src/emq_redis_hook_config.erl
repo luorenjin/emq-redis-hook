@@ -18,8 +18,6 @@
 
 -define(APP, emq_redis_hook).
 
--define(LOG(Level, Format, Args), lager:Level("Redis Hook: " ++ Format, Args)).
-
 -export ([register/0, unregister/0]).
 
 %%--------------------------------------------------------------------
@@ -43,13 +41,10 @@ register_formatter() ->
         fun formatter_callback/2) || Key <- keys()].
 
 formatter_callback([_, _, "server"], Params) ->
-    ?LOG(info,"server :::: ~p ",[Params]),
     lists:concat([proplists:get_value(host, Params), ":", proplists:get_value(port, Params)]);
 formatter_callback([_, _, "pool"], Params) ->
-    ?LOG(info,"pool :::: ~p ",[Params]),
     proplists:get_value(pool_size, Params);
 formatter_callback([_, _, Key], Params) ->
-    ?LOG(info,"Key :::: ~p ",[Params]),
     proplists:get_value(list_to_atom(Key), Params).
 
 %%--------------------------------------------------------------------
@@ -67,7 +62,6 @@ register_config() ->
     clique:register_config_whitelist(Keys, ?APP).
 
 config_callback([_, _, "server"], Value0) ->
-    ?LOG(info,"server :::: ~p ",[Value0]),
     {Host, Port} = parse_servers(Value0),
     {ok, Env} = application:get_env(?APP, server),
     Env1 = lists:keyreplace(host, 1, Env, {host, Host}),
@@ -75,16 +69,13 @@ config_callback([_, _, "server"], Value0) ->
     application:set_env(?APP, server, Env2),
     " successfully\n";
 config_callback([_, _, "pool"], Value) ->
-    ?LOG(info,"pool :::: ~p ",[Value]),
     {ok, Env} = application:get_env(?APP, server),
     application:set_env(?APP, server, lists:keyreplace(pool_size, 1, Env, {pool_size, Value})),
     " successfully\n";
 config_callback([_, _, _, "key"], Value) ->
-    ?LOG(info,"key :::: ~p ",[Value]),
     application:set_env(?APP, key, Value),
     " successfully\n";
 config_callback([_, _, Key0], Value) ->
-    ?LOG(info,"key ~p :::: value ~p ",[Key0,Value]),
     Key = list_to_atom(Key0),
     {ok, Env} = application:get_env(?APP, server),
     application:set_env(?APP, server, lists:keyreplace(Key, 1, Env, {Key, Value})),
