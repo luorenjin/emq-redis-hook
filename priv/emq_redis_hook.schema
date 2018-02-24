@@ -38,13 +38,14 @@
   Pool = cuttlefish:conf_get("redis.hook.pool", Conf),
   Password = cuttlefish:conf_get("redis.hook.password", Conf),
   DB = cuttlefish:conf_get("redis.hook.database", Conf),
-  Key = cuttlefish:conf_get("redis.hook.message.key", Conf),
   [{pool_size, Pool},
    {auto_reconnect, 1},
    {host, RHost},
    {port, RPort},
    {database, DB},
-   {password, Password}]
+   {password, Password},
+   {key,Key}
+   ]
 end}.
 
 {mapping, "redis.hook.rule.client.connected.$name", "emq_redis_hook.rules", [

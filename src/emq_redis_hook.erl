@@ -201,7 +201,6 @@ on_message_delivered(ClientId, Username, Message = #mqtt_message{topic = Topic},
                   {topic, Message#mqtt_message.topic},
                   {qos, Message#mqtt_message.qos},
                   {retain, Message#mqtt_message.retain},
-                  {payload, Message#mqtt_message.payload},
                   {ts, emqttd_time:now_secs(Message#mqtt_message.timestamp)}],
         send_redis_request(Params)
     end, Topic, Filter).
@@ -221,7 +220,6 @@ on_message_acked(ClientId, Username, Message = #mqtt_message{topic = Topic}, {Fi
                   {topic, Message#mqtt_message.topic},
                   {qos, Message#mqtt_message.qos},
                   {retain, Message#mqtt_message.retain},
-                  {payload, Message#mqtt_message.payload},
                   {ts, emqttd_time:now_secs(Message#mqtt_message.timestamp)}],
         send_redis_request(Params)
     end, Topic, Filter).
@@ -231,9 +229,10 @@ on_message_acked(ClientId, Username, Message = #mqtt_message{topic = Topic}, {Fi
 %%--------------------------------------------------------------------
 
 send_redis_request(Params) ->
-    Params1 = iolist_to_binary(mochijson2:encode(Params)),
+  ?LOG(debug, "Params: ~p ", [Params]),
+  Params1 = jsx:encode(Params),
   Key = application:get_env(?APP, key, "message"),
-    ?LOG(debug, "Params: ~p  key: ~p ", [Params1,Key]),
+  ?LOG(debug, "Params1: ~p  key: ~p ", [Params, Key]),
     case emq_redis_hook_cli:q(["LPUSH", Key, Params1]) of
       {ok, _} ->
         ok;
