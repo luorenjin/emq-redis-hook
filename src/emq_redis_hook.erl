@@ -201,6 +201,7 @@ on_message_delivered(ClientId, Username, Message = #mqtt_message{topic = Topic},
                   {topic, Message#mqtt_message.topic},
                   {qos, Message#mqtt_message.qos},
                   {retain, Message#mqtt_message.retain},
+          {payload, Message#mqtt_message.payload},
                   {ts, emqttd_time:now_secs(Message#mqtt_message.timestamp)}],
         send_redis_request(Params)
     end, Topic, Filter).
@@ -220,6 +221,7 @@ on_message_acked(ClientId, Username, Message = #mqtt_message{topic = Topic}, {Fi
                   {topic, Message#mqtt_message.topic},
                   {qos, Message#mqtt_message.qos},
                   {retain, Message#mqtt_message.retain},
+          {payload, Message#mqtt_message.payload},
                   {ts, emqttd_time:now_secs(Message#mqtt_message.timestamp)}],
         send_redis_request(Params)
     end, Topic, Filter).
