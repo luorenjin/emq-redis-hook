@@ -16,7 +16,7 @@
 
 -module (emq_redis_hook_config).
 
--define(APP, emq_redis_hook).
+-include("emq_redis_hook.hrl").
 
 -export ([register/0, unregister/0]).
 

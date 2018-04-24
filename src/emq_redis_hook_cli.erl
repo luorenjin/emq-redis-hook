@@ -18,7 +18,7 @@
 
 -behaviour(ecpool_worker).
 
--define(APP, emq_redis_hook).
+-include("emq_redis_hook.hrl").
 
 -include_lib("emqttd/include/emqttd.hrl").
 

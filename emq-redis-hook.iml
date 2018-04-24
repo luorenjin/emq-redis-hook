@@ -11,6 +11,7 @@
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/priv" type="erlang-include" />
       <sourceFolder url="file://$MODULE_DIR$/etc" type="erlang-include" />
+      <sourceFolder url="file://$MODULE_DIR$/include" type="erlang-include" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />

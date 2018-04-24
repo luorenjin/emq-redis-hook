@@ -16,9 +16,9 @@
 
 -module(emq_redis_hook).
 
--include_lib("emqttd/include/emqttd.hrl").
+-include("emq_redis_hook.hrl").
 
--define(APP, emq_redis_hook).
+-include_lib("emqttd/include/emqttd.hrl").
 
 -export([load/0, unload/0]).
 

@@ -1,8 +1,8 @@
 .PHONY: app tests
 
 PROJECT = emq_redis_hook
-PROJECT_DESCRIPTION = Hook with Redis
-PROJECT_VERSION = 2.3.6
+PROJECT_DESCRIPTION = EMQ Redishook Plugin
+PROJECT_VERSION = 2.3.7
 
 DEPS = eredis ecpool clique
 
