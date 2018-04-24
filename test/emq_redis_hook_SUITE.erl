@@ -1,5 +1,5 @@
 %%%-------------------------------------------------------------------
-%%% @author user
+%%% @author lbz
 %%% @copyright (C) 2018, <COMPANY>
 %%% @doc
 %%%
@@ -7,9 +7,9 @@
 %%% Created : 24. 四月 2018 14:59
 %%%-------------------------------------------------------------------
 -module(emq_redis_hook_SUITE).
--author("user").
+-author("lbz").
+-compile(export_all).
 
--include_lib("eunit/include/eunit.hrl").
+all() -> [].
 
-simple_test() ->
-  ?assert(true).
+groups() -> [].
