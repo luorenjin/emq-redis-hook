@@ -1,36 +1,28 @@
-.PHONY: app tests
-
 PROJECT = emq_redis_hook
 PROJECT_DESCRIPTION = EMQ Redishook Plugin
 PROJECT_VERSION = 2.3.7
 
-DEPS = eredis ecpool clique
-
-dep_eredis = git https://github.com/wooga/eredis master
-dep_ecpool = git https://github.com/emqtt/ecpool master
+DEPS = jsx clique
+dep_jsx    = git https://github.com/talentdeficit/jsx
 dep_clique = git https://github.com/emqtt/clique
 
-BUILD_DEPS = emqttd cuttlefish
+BUILD_DEPS = emqttd
 dep_emqttd = git https://github.com/emqtt/emqttd master
-dep_cuttlefish = git https://github.com/emqtt/cuttlefish
 
-NO_AUTOPATCH = cuttlefish
+ERLC_OPTS += +debug_info
+ERLC_OPTS += +'{parse_transform, lager_transform}'
 
-TEST_DEPS = emqttc emq_auth_username
+TEST_DEPS = emqttc
 dep_emqttc = git https://github.com/emqtt/emqttc
-dep_emq_auth_username = git https://github.com/emqtt/emq-auth-username
 
 TEST_ERLC_OPTS += +debug_info
 TEST_ERLC_OPTS += +'{parse_transform, lager_transform}'
 
 COVER = true
 
-ERLC_OPTS += +debug_info
-ERLC_OPTS += +'{parse_transform, lager_transform}'
-
 include erlang.mk
 
 app:: rebar.config
 
 app.config::
-	deps/cuttlefish/cuttlefish -l info -e etc/ -c etc/emq_redis_hook.conf -i priv/emq_redis_hook.schema -d data
+	./deps/cuttlefish/cuttlefish -l info -e etc/ -c etc/emq_redis_hook.conf -i priv/emq_redis_hook.schema -d data

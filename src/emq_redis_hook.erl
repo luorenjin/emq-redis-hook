@@ -238,7 +238,7 @@ send_http_request(Params) ->
     {ok, _} ->
       ok;
     {error, Reason} ->
-      ?LOG(error, "HTTP request error: ~p", [Reason]), ok %% TODO: return ok?
+      ?LOG(error, "HTTP request error: ~p", [Reason]), ok
   end.
 
 request_(Method, Req, HTTPOpts, Opts, Times) ->
