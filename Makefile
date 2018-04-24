@@ -2,7 +2,7 @@
 
 PROJECT = emq_redis_hook
 PROJECT_DESCRIPTION = Hook with Redis
-PROJECT_VERSION = 2.3.4
+PROJECT_VERSION = 2.3.6
 
 DEPS = eredis ecpool clique
 
@@ -18,7 +18,7 @@ NO_AUTOPATCH = cuttlefish
 
 TEST_DEPS = emqttc emq_auth_username
 dep_emqttc = git https://github.com/emqtt/emqttc
-dep_emq_auth_username = git https://github.com/emqtt/emq-auth-redis
+dep_emq_auth_username = git https://github.com/emqtt/emq-auth-username
 
 TEST_ERLC_OPTS += +debug_info
 TEST_ERLC_OPTS += +'{parse_transform, lager_transform}'
