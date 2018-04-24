@@ -18,16 +18,14 @@
 
 -behaviour(supervisor).
 
--include("emq_redis_hook.hrl").
-
 -export([start_link/0]).
 
 -export([init/1]).
 
+-define(SERVER, ?MODULE).
+
 start_link() ->
-    supervisor:start_link({local, ?MODULE}, ?MODULE, []).
+    supervisor:start_link({local, ?SERVER}, ?MODULE, []).
 
 init([]) ->
-    {ok, Server} = application:get_env(?APP, server),
-    PoolSpec = ecpool:pool_spec(?APP, ?APP, emq_redis_hook_cli, Server),
-    {ok, {{one_for_one, 10, 100}, [PoolSpec]}}.
+    {ok, {{one_for_all, 0, 1}, []}}.

@@ -16,9 +16,9 @@
 
 -module(emq_redis_hook).
 
--include("emq_redis_hook.hrl").
-
 -include_lib("emqttd/include/emqttd.hrl").
+
+-define(APP, emq_redis_hook).
 
 -export([load/0, unload/0]).
 
@@ -31,7 +31,7 @@
 
 -export([on_message_publish/2, on_message_delivered/4, on_message_acked/4]).
 
--define(LOG(Level, Format, Args), lager:Level("Redis Hook: " ++ Format, Args)).
+-define(LOG(Level, Format, Args), lager:Level("WebHook: " ++ Format, Args)).
 
 load() ->
     lists:foreach(fun({Hook, Fun, Filter}) ->
@@ -52,7 +52,7 @@ on_client_connected(0, Client = #mqtt_client{client_id = ClientId, username = Us
               {client_id, ClientId},
               {username, Username},
               {conn_ack, 0}],
-    send_redis_request(Params),
+  send_http_request(Params),
     {ok, Client};
 
 on_client_connected(_, Client = #mqtt_client{}, _Env) ->
@@ -64,15 +64,15 @@ on_client_connected(_, Client = #mqtt_client{}, _Env) ->
 
 on_client_disconnected(auth_failure, #mqtt_client{}, _Env) ->
     ok;
-on_client_disconnected({shutdown, Reason}, Client, _Env) when is_atom(Reason) ->
-    on_client_disconnected(Reason, Client, _Env);
+on_client_disconnected({shutdown, Reason}, Client, Env) when is_atom(Reason) ->
+  on_client_disconnected(Reason, Client, Env);
 on_client_disconnected(Reason, _Client = #mqtt_client{client_id = ClientId, username = Username}, _Env)
     when is_atom(Reason) ->
     Params = [{action, client_disconnected},
               {client_id, ClientId},
               {username, Username},
               {reason, Reason}],
-    send_redis_request(Params),
+  send_http_request(Params),
     ok;
 on_client_disconnected(Reason, _Client, _Env) ->
     ?LOG(error, "Client disconnected, cannot encode reason: ~p", [Reason]),
@@ -90,7 +90,7 @@ on_client_subscribe(ClientId, Username, TopicTable, {Filter}) ->
                       {username, Username},
                       {topic, Topic},
                       {opts, Opts}],
-            send_redis_request(Params)
+          send_http_request(Params)
         end, Topic, Filter)
     end, TopicTable).
 
@@ -106,7 +106,7 @@ on_client_unsubscribe(ClientId, Username, TopicTable, {Filter}) ->
                       {username, Username},
                       {topic, Topic},
                       {opts, Opts}],
-            send_redis_request(Params)
+          send_http_request(Params)
         end, Topic, Filter)
     end, TopicTable).
 
@@ -118,7 +118,7 @@ on_session_created(ClientId, Username, _Env) ->
     Params = [{action, session_created},
               {client_id, ClientId},
               {username, Username}],
-    send_redis_request(Params),
+  send_http_request(Params),
     ok.
 
 %%--------------------------------------------------------------------
@@ -132,7 +132,7 @@ on_session_subscribed(ClientId, Username, {Topic, Opts}, {Filter}) ->
                   {username, Username},
                   {topic, Topic},
                   {opts, Opts}],
-        send_redis_request(Params)
+      send_http_request(Params)
     end, Topic, Filter).
 
 %%--------------------------------------------------------------------
@@ -145,7 +145,7 @@ on_session_unsubscribed(ClientId, Username, {Topic, _Opts}, {Filter}) ->
                   {client_id, ClientId},
                   {username, Username},
                   {topic, Topic}],
-        send_redis_request(Params)
+      send_http_request(Params)
     end, Topic, Filter).
 
 %%--------------------------------------------------------------------
@@ -159,7 +159,7 @@ on_session_terminated(ClientId, Username, Reason, _Env) when is_atom(Reason) ->
               {client_id, ClientId},
               {username, Username},
               {reason, Reason}],
-    send_redis_request(Params),
+  send_http_request(Params),
     ok;
 on_session_terminated(_ClientId, _Username, Reason, _Env) ->
     ?LOG(error, "Session terminated, cannot encode the reason: ~p", [Reason]),
@@ -182,7 +182,7 @@ on_message_publish(Message = #mqtt_message{topic = Topic}, {Filter}) ->
                   {retain, Message#mqtt_message.retain},
                   {payload, Message#mqtt_message.payload},
                   {ts, emqttd_time:now_secs(Message#mqtt_message.timestamp)}],
-        send_redis_request(Params),
+      send_http_request(Params),
         {ok, Message}
     end, Message, Topic, Filter).
 
@@ -203,7 +203,7 @@ on_message_delivered(ClientId, Username, Message = #mqtt_message{topic = Topic},
                   {retain, Message#mqtt_message.retain},
           {payload, Message#mqtt_message.payload},
                   {ts, emqttd_time:now_secs(Message#mqtt_message.timestamp)}],
-        send_redis_request(Params)
+      send_http_request(Params)
     end, Topic, Filter).
 
 %%--------------------------------------------------------------------
@@ -223,23 +223,31 @@ on_message_acked(ClientId, Username, Message = #mqtt_message{topic = Topic}, {Fi
                   {retain, Message#mqtt_message.retain},
           {payload, Message#mqtt_message.payload},
                   {ts, emqttd_time:now_secs(Message#mqtt_message.timestamp)}],
-        send_redis_request(Params)
+      send_http_request(Params)
     end, Topic, Filter).
 
 %%--------------------------------------------------------------------
 %% Internal functions
 %%--------------------------------------------------------------------
 
-send_redis_request(Params) ->
-  ?LOG(debug, "Params: ~p ", [Params]),
-  Params1 = jsx:encode(Params),
-  Key = application:get_env(?APP, key, "message"),
-  ?LOG(debug, "Params1: ~p  key: ~p ", [Params, Key]),
-    case emq_redis_hook_cli:q(["LPUSH", Key, Params1]) of
-      {ok, _} ->
-        ok;
-      {error, Reason} ->
-        ?LOG(error, "Redis lpush error: ~p", [Reason]), ok
+send_http_request(Params) ->
+  Params1 = iolist_to_binary(mochijson2:encode(Params)),
+  Url = application:get_env(?APP, url, "http://127.0.0.1"),
+  ?LOG(debug, "Url:~p, params:~s", [Url, Params1]),
+  case request_(post, {Url, [], "application/json", Params1}, [{timeout, 5000}], [], 0) of
+    {ok, _} ->
+      ok;
+    {error, Reason} ->
+      ?LOG(error, "HTTP request error: ~p", [Reason]), ok %% TODO: return ok?
+  end.
+
+request_(Method, Req, HTTPOpts, Opts, Times) ->
+  %% Resend request, when TCP closed by remotely
+  case httpc:request(Method, Req, HTTPOpts, Opts) of
+    {error, socket_closed_remotely} when Times < 3 ->
+      timer:sleep(trunc(math:pow(10, Times))),
+      request_(Method, Req, HTTPOpts, Opts, Times + 1);
+    Other -> Other
     end.
 
 parse_rule(Rules) ->
