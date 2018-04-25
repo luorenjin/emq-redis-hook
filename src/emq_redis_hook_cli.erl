@@ -14,20 +14,30 @@
 %% limitations under the License.
 %%--------------------------------------------------------------------
 
--module(emq_redis_hook_sup).
+-module(emq_redis_hook_cli).
 
--behaviour(supervisor).
+-behaviour(ecpool_worker).
 
 -include("emq_redis_hook.hrl").
 
--export([start_link/0]).
+-include_lib("emqttd/include/emqttd.hrl").
 
--export([init/1]).
+-define(ENV(Key, Opts), proplists:get_value(Key, Opts)).
 
-start_link() ->
-    supervisor:start_link({local, ?MODULE}, ?MODULE, []).
+-export([connect/1, q/1]).
 
-init([]) ->
-    {ok, Server} = application:get_env(?APP, server),
-    PoolSpec = ecpool:pool_spec(?APP, ?APP, emq_redis_hook_cli, Server),
-    {ok, {{one_for_one, 10, 100}, [PoolSpec]}}.
+%%--------------------------------------------------------------------
+%% Redis Connect/Query
+%%--------------------------------------------------------------------
+
+connect(Opts) ->
+  eredis:start_link(?ENV(host, Opts),
+    ?ENV(port, Opts),
+    ?ENV(database, Opts),
+    ?ENV(password, Opts),
+    no_reconnect).
+
+%% Redis Query
+-spec(q(string()) -> {ok, undefined | binary() | list()} | {error, atom() | binary()}).
+q(Cmd) ->
+  ecpool:with_client(?APP, fun(C) -> eredis:q(C, Cmd) end).

@@ -1,5 +1,50 @@
-{mapping, "redis.hook.api.url", "emq_redis_hook.url", [
-  {datatype, string}
+%%-*- mode: erlang -*-
+%% emq_redis_hook config mapping
+{mapping, "redis.hook.server", "emq_redis_hook.server", [
+  {default, {"127.0.0.1", 6379}},
+  {datatype, [integer, ip, string]}
+]}.
+
+{mapping, "redis.hook.pool", "emq_redis_hook.server", [
+  {default, 8},
+  {datatype, integer}
+]}.
+
+{mapping, "redis.hook.database", "emq_redis_hook.server", [
+  {default, 0},
+  {datatype, integer}
+]}.
+
+{mapping, "redis.hook.password", "emq_redis_hook.server", [
+  {default, ""},
+  {datatype, string},
+  hidden
+]}.
+
+{translation, "emq_redis_hook.server", fun(Conf) ->
+  {RHost, RPort} =
+  case cuttlefish:conf_get("redis.hook.server", Conf) of
+    {Ip, Port} -> {Ip, Port};
+    S          -> case string:tokens(S, ":") of
+                    [Domain]       -> {Domain, 6379};
+                    [Domain, Port] -> {Domain, list_to_integer(Port)}
+                  end
+    end,
+  Pool = cuttlefish:conf_get("redis.hook.pool", Conf),
+  Password = cuttlefish:conf_get("redis.hook.password", Conf),
+  DB = cuttlefish:conf_get("redis.hook.database", Conf),
+  [{pool_size, Pool},
+   {auto_reconnect, 1},
+   {host, RHost},
+   {port, RPort},
+   {database, DB},
+   {password, Password}]
+end}.
+
+{mapping, "redis.hook.message.key", "emq_redis_hook.key", [
+  {default, ""},
+  {datatype, string},
+  hidden
 ]}.
 
 {mapping, "redis.hook.rule.client.connected.$name", "emq_redis_hook.rules", [
@@ -49,7 +94,7 @@
 {translation, "emq_redis_hook.rules", fun(Conf) ->
   Hooks = cuttlefish_variable:filter_by_prefix("redis.hook.rule", Conf),
   lists:map(
-    fun({[_, _, _,Name1,Name2, _], Val}) -> 
+    fun({[_, _, _,Name1,Name2, _], Val}) ->
 	  {lists:concat([Name1,".",Name2]), Val}
 	end, Hooks)
 end}.
