@@ -235,12 +235,12 @@ send_redis_request(Params) ->
   Params1 = jsx:encode(Params),
   Key = application:get_env(?APP, key, "message"),
   ?LOG(debug, "Params1: ~p  key: ~p ", [Params, Key]),
-    case emq_redis_hook_cli:q(["LPUSH", Key, Params1]) of
-      {ok, _} ->
-        ok;
-      {error, Reason} ->
-        ?LOG(error, "Redis lpush error: ~p", [Reason]), ok
-    end.
+  case emq_redis_hook_cli:q(["LPUSH", Key, Params1]) of
+    {ok, _} ->
+      ok;
+    {error, Reason} ->
+      ?LOG(error, "Redis lpush error: ~p", [Reason]), ok
+  end.
 
 parse_rule(Rules) ->
     parse_rule(Rules, []).
